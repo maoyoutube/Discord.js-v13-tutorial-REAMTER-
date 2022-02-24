@@ -1,12 +1,16 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const fs = require("fs");
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 const { clientId, guildId, token } = require("./config.js");
 
-const commands = [
-    new SlashCommandBuilder().setName('ping').setDescription("ping command")
-]
-    .map(command => command.toJSON());
+const commands = [];
+
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+commandFiles.forEach(file => {
+    const command = require(`./commands/${file}`);
+    commands.push(command.data.toJSON());
+})
 
 const rest = new REST({ version: '9' }).setToken(token);
 

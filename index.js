@@ -1,19 +1,33 @@
-const { Client } = require("discord.js");
+const fs = require("fs");
+const { Client, Collection } = require("discord.js");
 const { token, intent } = require("./config.js");
 
 const client = new Client({ intents: intent });
+
+client.commands = new Collection()
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+commandFiles.forEach(file => {
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.data.name, command);
+});
 
 client.once('ready', () => {
     console.log('Ready!');
 });
 
-client.on('interactionCreate', interaction => {
+client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
-    const { commandName } = interaction;
+    const command = client.commands.get(interaction.commandName);
 
-    if (commandName == 'ping') {
-        interaction.reply('pong!');
+    if (!command) return;
+
+    try {
+        await command.run(interaction);
+    } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: 'There was an error while running this command!', ephemeral: true });
     }
 })
 
