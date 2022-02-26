@@ -12,22 +12,14 @@ commandFiles.forEach(file => {
     client.commands.set(command.data.name, command);
 });
 
-client.once('ready', () => {
-    console.log('Ready!');
-});
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
-client.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) return;
-
-    try {
-        await command.run(interaction);
-    } catch (error) {
-        console.error(error);
-        await interaction.reply({ content: 'There was an error while running this command!', ephemeral: true });
+eventFiles.forEach(file => {
+    const event = require(`./events/${file}`);
+    if (event.once) {
+        client.once(event.name, (...args) => event.run(...args));
+    } else {
+        client.on(event.name, (...args) => event.run(...args));
     }
 })
 
